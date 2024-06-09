@@ -22,7 +22,9 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: windows
-        path: target/release/rl_ball_sym.dll
+        path: |
+          target/release/rl_ball_sym.dll
+          target/release/rl_ball_sym.lib
 
   linux:
     runs-on: ubuntu-latest
@@ -36,7 +38,9 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: linux
-        path: target/release/librl_ball_sym.so
+        path: |
+          target/release/librl_ball_sym.so
+          target/release/librl_ball_sym.a
 
   publish:
     runs-on: ubuntu-latest
