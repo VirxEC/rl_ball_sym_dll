@@ -1,0 +1,56 @@
+name: Build and release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Build 
+      run: cargo build --release
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: windows
+        path: target/release/rl_ball_sym.dll
+
+  linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: cargo build --release
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: linux
+        path: target/release/librl_ball_sym.so
+
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+
+    - name: Publish to GitHub Releases
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ./**/*
+        generate_release_notes: true
+        body: |
+          Pre-built Windows & Linux files
+  
