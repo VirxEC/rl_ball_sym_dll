@@ -92,7 +92,7 @@ pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
 
     let mut ball = *BALL.read().unwrap();
     ball.update(
-        dbg!(current_ball.time),
+        current_ball.time,
         current_ball.location.into(),
         current_ball.linear_velocity.into(),
         current_ball.angular_velocity.into(),

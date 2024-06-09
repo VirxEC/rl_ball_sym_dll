@@ -1,11 +1,11 @@
 [package]
 name = "rl_ball_sym_dll"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [lib]
 name = "rl_ball_sym"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib"]
 
 [dependencies.rl_ball_sym]
 version = "4.0.0"
