@@ -1,0 +1,19 @@
+[package]
+name = "rl_ball_sym_dll"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rl_ball_sym"
+crate-type = ["cdylib"]
+
+[dependencies.rl_ball_sym]
+version = "4.0.0"
+default-features = false
+features = ["compression", "standard", "hoops", "dropshot", "throwback"]
+
+[profile.release]
+codegen-units=1
+lto = true
+strip = true
+panic = "abort"
