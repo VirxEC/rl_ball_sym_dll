@@ -1,11 +1,15 @@
 use rl_ball_sym::{Ball, Game, Vec3A};
-use std::sync::RwLock;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    RwLock,
+};
 
 const TPS: usize = 120;
 const DT: f32 = 1.0 / TPS as f32;
 
 static GAME: RwLock<Option<Game>> = RwLock::new(None);
 static BALL: RwLock<Ball> = RwLock::new(Ball::const_default());
+static HEATSEEKER: AtomicBool = AtomicBool::new(false);
 
 fn set_game_and_ball((game, ball): (Game, Ball)) {
     let mut game_lock = GAME.write().unwrap();
@@ -16,23 +20,33 @@ fn set_game_and_ball((game, ball): (Game, Ball)) {
 }
 
 #[no_mangle]
+pub extern "C" fn load_heatseeker() {
+    set_game_and_ball(rl_ball_sym::load_standard_heatseeker());
+    HEATSEEKER.store(true, Ordering::Relaxed);
+}
+
+#[no_mangle]
 pub extern "C" fn load_standard() {
     set_game_and_ball(rl_ball_sym::load_standard());
+    HEATSEEKER.store(false, Ordering::Relaxed);
 }
 
 #[no_mangle]
 pub extern "C" fn load_dropshot() {
     set_game_and_ball(rl_ball_sym::load_dropshot());
+    HEATSEEKER.store(false, Ordering::Relaxed);
 }
 
 #[no_mangle]
 pub extern "C" fn load_hoops() {
     set_game_and_ball(rl_ball_sym::load_hoops());
+    HEATSEEKER.store(false, Ordering::Relaxed);
 }
 
 #[no_mangle]
 pub extern "C" fn load_standard_throwback() {
     set_game_and_ball(rl_ball_sym::load_standard_throwback());
+    HEATSEEKER.store(false, Ordering::Relaxed);
 }
 
 #[repr(C)]
@@ -83,6 +97,12 @@ impl From<Ball> for BallSlice {
 }
 
 #[no_mangle]
+pub extern "C" fn set_heatseeker_target(blue_goal: u8) {
+    let mut ball = *BALL.write().unwrap();
+    ball.set_heatseeker_target(blue_goal == 1);
+}
+
+#[no_mangle]
 pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
     let game_lock = GAME.read().unwrap();
     let Some(game) = game_lock.as_ref() else {
@@ -98,6 +118,10 @@ pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
         current_ball.angular_velocity.into(),
     );
 
-    ball.step(game, DT);
+    if HEATSEEKER.load(Ordering::Relaxed) {
+        ball.step_heatseeker(game, DT);
+    } else {
+        ball.step(game, DT);
+    }
     ball.into()
 }
