@@ -1,6 +1,6 @@
 [package]
 name = "rl_ball_sym_dll"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 [lib]
@@ -8,7 +8,7 @@ name = "rl_ball_sym"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-rl_ball_sym = { version = "4.1.0", features = ["compression"] }
+rl_ball_sym = { version = "4.1.2", features = ["compression"] }
 
 [profile.release]
 codegen-units=1

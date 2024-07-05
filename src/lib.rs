@@ -1,52 +1,52 @@
 use rl_ball_sym::{Ball, Game, Vec3A};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    RwLock,
-};
+use std::sync::RwLock;
 
 const TPS: usize = 120;
 const DT: f32 = 1.0 / TPS as f32;
 
-static GAME: RwLock<Option<Game>> = RwLock::new(None);
-static BALL: RwLock<Ball> = RwLock::new(Ball::const_default());
-static HEATSEEKER: AtomicBool = AtomicBool::new(false);
+struct State {
+    game: Option<Game>,
+    ball: Ball,
+    heatseeker: bool,
+}
 
-fn set_game_and_ball((game, ball): (Game, Ball)) {
-    let mut game_lock = GAME.write().unwrap();
-    *game_lock = Some(game);
+static GAME_AND_BALL: RwLock<State> = RwLock::new(State {
+    game: None,
+    ball: Ball::const_default(),
+    heatseeker: false,
+});
 
-    let mut ball_lock = BALL.write().unwrap();
-    *ball_lock = ball;
+fn set_game_and_ball((game, ball): (Game, Ball), heatseeker: bool) {
+    *GAME_AND_BALL.write().unwrap() = State {
+        game: Some(game),
+        ball,
+        heatseeker,
+    };
 }
 
 #[no_mangle]
 pub extern "C" fn load_heatseeker() {
-    set_game_and_ball(rl_ball_sym::load_standard_heatseeker());
-    HEATSEEKER.store(true, Ordering::Relaxed);
+    set_game_and_ball(rl_ball_sym::load_standard_heatseeker(), true);
 }
 
 #[no_mangle]
 pub extern "C" fn load_standard() {
-    set_game_and_ball(rl_ball_sym::load_standard());
-    HEATSEEKER.store(false, Ordering::Relaxed);
+    set_game_and_ball(rl_ball_sym::load_standard(), false);
 }
 
 #[no_mangle]
 pub extern "C" fn load_dropshot() {
-    set_game_and_ball(rl_ball_sym::load_dropshot());
-    HEATSEEKER.store(false, Ordering::Relaxed);
+    set_game_and_ball(rl_ball_sym::load_dropshot(), false);
 }
 
 #[no_mangle]
 pub extern "C" fn load_hoops() {
-    set_game_and_ball(rl_ball_sym::load_hoops());
-    HEATSEEKER.store(false, Ordering::Relaxed);
+    set_game_and_ball(rl_ball_sym::load_hoops(), false);
 }
 
 #[no_mangle]
 pub extern "C" fn load_standard_throwback() {
-    set_game_and_ball(rl_ball_sym::load_standard_throwback());
-    HEATSEEKER.store(false, Ordering::Relaxed);
+    set_game_and_ball(rl_ball_sym::load_standard_throwback(), false);
 }
 
 #[repr(C)]
@@ -98,19 +98,26 @@ impl From<Ball> for BallSlice {
 
 #[no_mangle]
 pub extern "C" fn set_heatseeker_target(blue_goal: u8) {
-    let mut ball = *BALL.write().unwrap();
-    ball.set_heatseeker_target(blue_goal == 1);
+    let mut state = GAME_AND_BALL.write().unwrap();
+    state.ball.set_heatseeker_target(blue_goal == 1);
+}
+
+#[no_mangle]
+pub extern "C" fn reset_heatseeker_target() {
+    let mut state = GAME_AND_BALL.write().unwrap();
+    state.ball.reset_heatseeker_target();
 }
 
 #[no_mangle]
 pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
-    let game_lock = GAME.read().unwrap();
-    let Some(game) = game_lock.as_ref() else {
+    let state = GAME_AND_BALL.read().unwrap();
+
+    let Some(game) = state.game.as_ref() else {
         println!("Warning: No game loaded");
         return BallSlice::default();
     };
 
-    let mut ball = *BALL.read().unwrap();
+    let mut ball = state.ball;
     ball.update(
         current_ball.time,
         current_ball.location.into(),
@@ -118,10 +125,11 @@ pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
         current_ball.angular_velocity.into(),
     );
 
-    if HEATSEEKER.load(Ordering::Relaxed) {
+    if state.heatseeker {
         ball.step_heatseeker(game, DT);
     } else {
         ball.step(game, DT);
     }
+
     ball.into()
 }
