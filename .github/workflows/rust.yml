@@ -22,14 +22,16 @@ jobs:
         rustup component add rust-src --toolchain nightly
 
     - name: Build
-      run: RUSTFLAGS="-Zlocation-detail=none" cargo +nightly build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-pc-windows-msvc --release
+      run: |
+        set RUSTFLAGS="-Zlocation-detail=none"
+        cargo +nightly build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-pc-windows-msvc --release
 
     - uses: actions/upload-artifact@v4
       with:
         name: windows
         path: |
-          target/release/rl_ball_sym.dll
-          target/release/rl_ball_sym.lib
+          target/*/release/rl_ball_sym.dll
+          target/*/release/rl_ball_sym.lib
 
   linux:
     runs-on: ubuntu-latest
@@ -49,8 +51,8 @@ jobs:
       with:
         name: linux
         path: |
-          target/release/librl_ball_sym.so
-          target/release/librl_ball_sym.a
+          target/*/release/librl_ball_sym.so
+          target/*/release/librl_ball_sym.a
 
   publish:
     runs-on: ubuntu-latest
