@@ -97,6 +97,12 @@ impl From<Ball> for BallSlice {
 }
 
 #[no_mangle]
+pub extern "C" fn get_heatseeker_target_y() -> f32 {
+    let state = GAME_AND_BALL.read().unwrap();
+    state.ball.get_heatseeker_target().y
+}
+
+#[no_mangle]
 pub extern "C" fn set_heatseeker_target(blue_goal: u8) {
     let mut state = GAME_AND_BALL.write().unwrap();
     state.ball.set_heatseeker_target(blue_goal == 1);
