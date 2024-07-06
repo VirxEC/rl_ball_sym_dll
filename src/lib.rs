@@ -50,7 +50,6 @@ pub extern "C" fn load_standard_throwback() {
 }
 
 #[repr(C)]
-#[derive(Default)]
 pub struct Vec3 {
     x: f32,
     y: f32,
@@ -76,7 +75,6 @@ impl From<Vec3A> for Vec3 {
 }
 
 #[repr(C)]
-#[derive(Default)]
 pub struct BallSlice {
     pub time: f32,
     pub location: Vec3,
@@ -115,19 +113,21 @@ pub extern "C" fn reset_heatseeker_target() {
 }
 
 #[no_mangle]
-pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
+pub extern "C" fn step(current_ball: BallSlice, ticks: u16) -> *mut BallSlice {
     let state = GAME_AND_BALL.read().unwrap();
-
     let Some(game) = state.game.as_ref() else {
+        // Don't use println!() to avoid bringing in the `fmt` module
         let out = stdout();
         let mut handle = out.lock();
         handle.write_all(b"Warning: No game loaded\n").unwrap();
         handle.flush().unwrap();
 
-        return BallSlice::default();
+        return std::ptr::null_mut();
     };
 
     let mut ball = state.ball;
+    let mut balls = Vec::with_capacity(ticks as usize);
+
     ball.update(
         current_ball.time,
         current_ball.location.into(),
@@ -135,11 +135,31 @@ pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
         current_ball.angular_velocity.into(),
     );
 
-    if state.heatseeker {
-        ball.step_heatseeker(game, DT);
-    } else {
-        ball.step(game, DT);
+    for _ in 0..ticks {
+        if state.heatseeker {
+            ball.step_heatseeker(game, DT);
+        } else {
+            ball.step(game, DT);
+        }
+
+        balls.push(ball.into());
     }
 
-    ball.into()
+    // Remove excess capacity so the length is exactly `ticks`
+    balls.shrink_to_fit();
+    // Turn into pointer
+    let ptr = balls.as_mut_ptr();
+    // Prevent the memory from being deallocated
+    std::mem::forget(balls);
+
+    ptr
+}
+
+/// # Safety
+/// 
+/// Ensure that the pointer is valid and that the memory it points to is not deallocated.
+#[no_mangle]
+pub unsafe extern "C" fn free_ball_slices(ptr: *mut BallSlice, size: u16) {
+    let length = size as usize;
+    Vec::from_raw_parts(ptr, length, length);
 }
