@@ -1,5 +1,5 @@
 use rl_ball_sym::{Ball, Game, Vec3A};
-use std::sync::RwLock;
+use std::{io::{stdout, Write}, sync::RwLock};
 
 const TPS: usize = 120;
 const DT: f32 = 1.0 / TPS as f32;
@@ -113,7 +113,11 @@ pub extern "C" fn step(current_ball: BallSlice) -> BallSlice {
     let state = GAME_AND_BALL.read().unwrap();
 
     let Some(game) = state.game.as_ref() else {
-        println!("Warning: No game loaded");
+        let out = stdout();
+        let mut handle = out.lock();
+        handle.write_all(b"Warning: No game loaded\n").unwrap();
+        handle.flush().unwrap();
+
         return BallSlice::default();
     };
 
