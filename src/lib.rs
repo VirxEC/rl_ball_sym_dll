@@ -58,15 +58,15 @@ pub struct Vec3 {
 
 impl From<Vec3> for Vec3A {
     #[inline]
-    fn from(v: Vec3) -> Vec3A {
-        Vec3A::new(v.x, v.y, v.z)
+    fn from(v: Vec3) -> Self {
+        Self::new(v.x, v.y, v.z)
     }
 }
 
 impl From<Vec3A> for Vec3 {
     #[inline]
-    fn from(v: Vec3A) -> Vec3 {
-        Vec3 {
+    fn from(v: Vec3A) -> Self {
+        Self {
             x: v.x,
             y: v.y,
             z: v.z,
@@ -84,8 +84,8 @@ pub struct BallSlice {
 
 impl From<Ball> for BallSlice {
     #[inline]
-    fn from(ball: Ball) -> BallSlice {
-        BallSlice {
+    fn from(ball: Ball) -> Self {
+        Self {
             time: ball.time,
             location: ball.location.into(),
             linear_velocity: ball.velocity.into(),

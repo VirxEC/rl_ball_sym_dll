@@ -15,3 +15,6 @@ codegen-units=1
 lto = true
 strip = true
 panic = "abort"
+
+[lints.clippy]
+all = "warn"
