@@ -12,7 +12,7 @@ struct State {
 
 static GAME_AND_BALL: RwLock<State> = RwLock::new(State {
     game: None,
-    ball: Ball::const_default(),
+    ball: Ball::DEFAULT_STANDARD,
     heatseeker: false,
 });
 
@@ -110,6 +110,22 @@ pub extern "C" fn set_heatseeker_target(blue_goal: u8) {
 pub extern "C" fn reset_heatseeker_target() {
     let mut state = GAME_AND_BALL.write().unwrap();
     state.ball.reset_heatseeker_target();
+}
+
+#[no_mangle]
+pub extern "C" fn set_gravity(gravity: f32) {
+    let mut state = GAME_AND_BALL.write().unwrap();
+    let Some(game) = state.game.as_mut() else {
+        // Don't use println!() to avoid bringing in the `fmt` module
+        let out = stdout();
+        let mut handle = out.lock();
+        handle.write_all(b"Warning: No game loaded\n").unwrap();
+        handle.flush().unwrap();
+
+        return;
+    };
+
+    game.gravity.z = gravity;
 }
 
 #[no_mangle]
