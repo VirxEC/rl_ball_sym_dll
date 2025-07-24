@@ -68,15 +68,13 @@ jobs:
     - name: Build
       run: RUSTFLAGS="-Zlocation-detail=none" cargo +nightly build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-darwin --release
 
-    - run: |
-        find target -path "*/release/librl_ball_sym.so" -exec bash -c 'mv "$0" "${0%/*}/librl_ball_sym_mac.so"' {} \;
-        find target -path "*/release/librl_ball_sym.a" -exec bash -c 'mv "$0" "${0%/*}/librl_ball_sym_mac.a"' {} \;
+    - run: find target -path "*/release/librl_ball_sym.a" -exec bash -c 'mv "$0" "${0%/*}/librl_ball_sym_mac.a"' {} \;
 
     - uses: actions/upload-artifact@v4
       with:
         name: macos
         path: |
-          target/*/release/librl_ball_sym_mac.so
+          target/*/release/librl_ball_sym.dylib
           target/*/release/librl_ball_sym_mac.a
 
   publish:
