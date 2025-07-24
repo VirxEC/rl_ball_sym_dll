@@ -76,8 +76,8 @@ jobs:
       with:
         name: macos
         path: |
-          target/*/release/librl_ball_sym.so
-          target/*/release/librl_ball_sym.a
+          target/*/release/librl_ball_sym_mac.so
+          target/*/release/librl_ball_sym_mac.a
 
   publish:
     runs-on: ubuntu-latest
